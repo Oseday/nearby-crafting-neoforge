@@ -1,8 +1,10 @@
 package com.oseday.nearbycrafting.mixin;
 
 import com.oseday.nearbycrafting.NearbyCraftingHelper;
+import com.oseday.nearbycrafting.bridge.RecipeBookMenuBridge;
 import com.oseday.nearbycrafting.mixin.accessor.CraftingMenuAccessor;
 import com.oseday.nearbycrafting.mixin.accessor.InventoryMenuAccessor;
+import com.oseday.nearbycrafting.mixin.accessor.RecipeBookMenuInvoker;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -10,12 +12,19 @@ import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(RecipeBookMenu.class)
-public abstract class RecipeBookMenuMixin {
+public abstract class RecipeBookMenuMixin implements RecipeBookMenuBridge {
+
+	@Unique
+	private RecipeHolder<?> nearbycrafting$lastRecipe;
+
+	@Unique
+	private boolean nearbycrafting$isRepeating;
 	
 	/**
 	* Inject at the HEAD of RecipeBookMenu.handlePlacement.
@@ -37,6 +46,8 @@ public abstract class RecipeBookMenuMixin {
 		if (player == null) return;
 		if (!(player.level() instanceof ServerLevel serverLevel)) return;
 		if (serverLevel.isClientSide()) return;
+
+		this.nearbycrafting$lastRecipe = recipeHolder;
 		
 		CraftingContainer bridge = nearbycrafting$getCraftingGrid();
 		if (bridge != null && !bridge.isEmpty()) {
@@ -64,5 +75,42 @@ public abstract class RecipeBookMenuMixin {
 		}
 		
 		return null;
+	}
+
+	@Override
+	public void nearbycrafting$tryRepeatRecipe(ServerPlayer player) {
+		if (player == null) {
+			return;
+		}
+
+		RecipeHolder<?> recipe = this.nearbycrafting$lastRecipe;
+		if (recipe == null) {
+			return;
+		}
+
+		if (!(player.level() instanceof ServerLevel serverLevel) || serverLevel.isClientSide()) {
+			return;
+		}
+
+		CraftingContainer grid = nearbycrafting$getCraftingGrid();
+		if (grid == null || !grid.isEmpty()) {
+			return;
+		}
+
+		if (this.nearbycrafting$isRepeating) {
+			return;
+		}
+
+		this.nearbycrafting$isRepeating = true;
+		try {
+			((RecipeBookMenuInvoker) (Object) this).nearbycrafting$invokeHandlePlacement(false, recipe, player);
+		} finally {
+			this.nearbycrafting$isRepeating = false;
+		}
+	}
+
+	@Override
+	public void nearbycrafting$clearRepeatRecipe() {
+		this.nearbycrafting$lastRecipe = null;
 	}
 }

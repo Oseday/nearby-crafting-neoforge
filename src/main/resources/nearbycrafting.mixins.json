@@ -6,8 +6,10 @@
   "mixins": [
     "CraftingMenuMixin",
     "RecipeBookMenuMixin",
+    "ResultSlotMixin",
     "accessor.CraftingMenuAccessor",
-    "accessor.InventoryMenuAccessor"
+    "accessor.InventoryMenuAccessor",
+    "accessor.RecipeBookMenuInvoker"
   ],
   "client": [],
   "injectors": {

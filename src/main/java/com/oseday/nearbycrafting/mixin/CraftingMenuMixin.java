@@ -1,6 +1,7 @@
 package com.oseday.nearbycrafting.mixin;
 
 import com.oseday.nearbycrafting.NearbyCraftingHelper;
+import com.oseday.nearbycrafting.bridge.RecipeBookMenuBridge;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -32,5 +33,8 @@ public abstract class CraftingMenuMixin {
 		}
 		
 		NearbyCraftingHelper.returnCraftingGridToNearbyContainers(serverLevel, serverPlayer, this.craftSlots);
+		if (((Object) this) instanceof RecipeBookMenuBridge bridge) {
+			bridge.nearbycrafting$clearRepeatRecipe();
+		}
 	}
 }
