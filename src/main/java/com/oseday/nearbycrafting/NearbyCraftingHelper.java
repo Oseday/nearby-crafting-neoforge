@@ -22,8 +22,6 @@ import java.util.Map;
 
 public final class NearbyCraftingHelper {
 
-    public static final int REACH_RADIUS = 8;
-
     private NearbyCraftingHelper() {
     }
 
@@ -41,6 +39,10 @@ public final class NearbyCraftingHelper {
             Inventory playerInventory
     ) {
         if (level == null || player == null || recipeHolder == null || playerInventory == null) {
+            return;
+        }
+
+        if (!Config.MOD_ENABLED.getAsBoolean()) {
             return;
         }
 
@@ -76,7 +78,7 @@ public final class NearbyCraftingHelper {
         }
 
         BlockPos center = player.blockPosition();
-        List<Container> nearbyContainers = findNearbyContainers(level, center, REACH_RADIUS);
+        List<Container> nearbyContainers = findNearbyContainers(level, center, Config.CHEST_SEARCH_RANGE.getAsInt());
         if (nearbyContainers.isEmpty()) {
             return;
         }

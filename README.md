@@ -1,25 +1,22 @@
+## Nearby Crafting (NeoForge)
 
-Installation information
-=======
+Nearby Crafting is a lightweight NeoForge mod that lets the vanilla recipe book grab ingredients from chests, barrels, and other containers around you before it autofills a crafting grid. When you click a recipe in either the 2×2 or 3×3 recipe book, the mod scans the nearby area, tops up your inventory with what you are missing, and then lets vanilla crafting proceed as usual.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+### What it does
+- Hooks into `RecipeBookMenu.handlePlacement` on the server, so it works for both crafting table and inventory grids.
+- Collects only the exact items needed for a single craft to avoid draining storage.
+- Respects full player inventories; any leftovers are returned to the original container.
+- Uses the same stacking logic as vanilla, so enchanted or component-tagged stacks remain intact.
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+### Configuration
+Edit the generated `nearbycrafting-common.toml` (found under `run/config` during development or your instance's `config` folder in a pack). Changes require a world reload or server restart to take effect.
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `modEnabled` | boolean | `true` | Master toggle. Set to `false` to disable all injections without uninstalling the mod. |
+| `chestSearchRange` | integer (1–24) | `8` | Radius (in blocks) of the cubic area around the player that will be searched for containers. Larger values cover more storage but cost more server ticks. |
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
-
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+### Tips
+- Pair with storage mods or organized chest walls to craft without manual item shuffling.
+- Keep essential ingredients within the configured radius; blocks outside the cube are ignored.
+- Multiplayer-friendly: only the server needs the mod for the feature to work for all connected players.
