@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.oseday.nearbycrafting.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "RecipeBookMenuMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
