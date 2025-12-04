@@ -4,7 +4,10 @@
   "package": "com.oseday.nearbycrafting.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "RecipeBookMenuMixin"
+    "CraftingMenuMixin",
+    "RecipeBookMenuMixin",
+    "accessor.CraftingMenuAccessor",
+    "accessor.InventoryMenuAccessor"
   ],
   "client": [],
   "injectors": {

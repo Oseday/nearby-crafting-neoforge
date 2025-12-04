@@ -1,9 +1,12 @@
 package com.oseday.nearbycrafting.mixin;
 
 import com.oseday.nearbycrafting.NearbyCraftingHelper;
+import com.oseday.nearbycrafting.mixin.accessor.CraftingMenuAccessor;
+import com.oseday.nearbycrafting.mixin.accessor.InventoryMenuAccessor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,6 +38,11 @@ public abstract class RecipeBookMenuMixin {
         if (!(player.level() instanceof ServerLevel serverLevel)) return;
         if (serverLevel.isClientSide()) return;
 
+                CraftingContainer bridge = nearbycrafting$getCraftingGrid();
+                if (bridge != null && !bridge.isEmpty()) {
+                        NearbyCraftingHelper.returnCraftingGridToNearbyContainers(serverLevel, player, bridge);
+        }
+
         Inventory inv = player.getInventory();
 
         NearbyCraftingHelper.topUpInventoryFromNearbyContainers(
@@ -44,4 +52,17 @@ public abstract class RecipeBookMenuMixin {
                 inv
         );
     }
+
+        private CraftingContainer nearbycrafting$getCraftingGrid() {
+                Object self = this;
+                if (self instanceof CraftingMenuAccessor craftingMenuAccessor) {
+                        return craftingMenuAccessor.nearbycrafting$getCraftSlots();
+                }
+
+                if (self instanceof InventoryMenuAccessor inventoryMenuAccessor) {
+                        return inventoryMenuAccessor.nearbycrafting$getCraftSlots();
+                }
+
+                return null;
+        }
 }

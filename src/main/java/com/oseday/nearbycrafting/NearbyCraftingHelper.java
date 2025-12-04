@@ -86,6 +86,56 @@ public final class NearbyCraftingHelper {
         pullFromContainersIntoPlayer(nearbyContainers, needed, playerInventory);
     }
 
+    /**
+     * Push leftover crafting grid items back into nearby containers when the player exits the menu.
+     */
+    public static void returnCraftingGridToNearbyContainers(
+            ServerLevel level,
+            Player player,
+            Container craftingGrid
+    ) {
+        if (level == null || player == null || craftingGrid == null) {
+            return;
+        }
+
+        if (!Config.MOD_ENABLED.getAsBoolean()) {
+            return;
+        }
+
+        List<Container> nearbyContainers = findNearbyContainers(
+                level,
+                player.blockPosition(),
+                Config.CHEST_SEARCH_RANGE.getAsInt()
+        );
+
+        if (nearbyContainers.isEmpty()) {
+            return;
+        }
+
+        boolean changed = false;
+
+        for (int slot = 0; slot < craftingGrid.getContainerSize(); slot++) {
+            ItemStack stackInGrid = craftingGrid.removeItemNoUpdate(slot);
+            if (stackInGrid.isEmpty()) {
+                continue;
+            }
+
+            ItemStack leftover = distributeIntoContainers(nearbyContainers, stackInGrid);
+            if (!leftover.isEmpty()) {
+                leftover = addToPlayerInventory(player.getInventory(), leftover);
+                if (!leftover.isEmpty() && !player.level().isClientSide()) {
+                    player.drop(leftover, false);
+                }
+            }
+
+            changed = true;
+        }
+
+        if (changed) {
+            craftingGrid.setChanged();
+        }
+    }
+
     private static void subtractFromCounts(Map<Item, Integer> needed, Inventory playerInventory) {
         for (int i = 0; i < playerInventory.getContainerSize(); i++) {
             ItemStack stack = playerInventory.getItem(i);
@@ -178,6 +228,84 @@ public final class NearbyCraftingHelper {
                 container.setChanged();
             }
         }
+    }
+
+    private static ItemStack distributeIntoContainers(List<Container> containers, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        if (containers.isEmpty()) {
+            return stack.copy();
+        }
+
+        ItemStack remaining = stack.copy();
+
+        for (Container container : containers) {
+            remaining = addToContainer(container, remaining);
+            if (remaining.isEmpty()) {
+                break;
+            }
+        }
+
+        return remaining;
+    }
+
+    private static ItemStack addToContainer(Container container, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack remaining = stack;
+
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack existing = container.getItem(slot);
+            if (existing.isEmpty()) {
+                continue;
+            }
+
+            if (!ItemStack.isSameItemSameComponents(existing, remaining)) {
+                continue;
+            }
+
+            int maxStackSize = Math.min(existing.getMaxStackSize(), container.getMaxStackSize());
+            int space = maxStackSize - existing.getCount();
+            if (space <= 0) {
+                continue;
+            }
+
+            int move = Math.min(space, remaining.getCount());
+            existing.grow(move);
+            remaining.shrink(move);
+            container.setChanged();
+            if (remaining.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+        }
+
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack existing = container.getItem(slot);
+            if (!existing.isEmpty()) {
+                continue;
+            }
+
+            int maxStackSize = Math.min(container.getMaxStackSize(), remaining.getMaxStackSize());
+            int move = Math.min(maxStackSize, remaining.getCount());
+            if (move <= 0) {
+                break;
+            }
+
+            ItemStack placed = remaining.copy();
+            placed.setCount(move);
+            container.setItem(slot, placed);
+            container.setChanged();
+            remaining.shrink(move);
+            if (remaining.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+        }
+
+        return remaining;
     }
 
     /**
