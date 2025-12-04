@@ -15,22 +15,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(CraftingMenu.class)
 public abstract class CraftingMenuMixin {
-
-    @Shadow @Final private CraftingContainer craftSlots;
-
-    @Inject(
-            method = "removed(Lnet/minecraft/world/entity/player/Player;)V",
-            at = @At("HEAD")
-    )
-    private void nearbycrafting$returnLeftovers(Player player, CallbackInfo ci) {
-        if (!(player instanceof ServerPlayer serverPlayer)) {
-            return;
-        }
-
-        if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-
-        NearbyCraftingHelper.returnCraftingGridToNearbyContainers(serverLevel, serverPlayer, this.craftSlots);
-    }
+	
+	@Shadow @Final private CraftingContainer craftSlots;
+	
+	@Inject(
+		method = "removed(Lnet/minecraft/world/entity/player/Player;)V",
+		at = @At("HEAD")
+	)
+	private void nearbycrafting$returnLeftovers(Player player, CallbackInfo ci) {
+		if (!(player instanceof ServerPlayer serverPlayer)) {
+			return;
+		}
+		
+		if (!(player.level() instanceof ServerLevel serverLevel)) {
+			return;
+		}
+		
+		NearbyCraftingHelper.returnCraftingGridToNearbyContainers(serverLevel, serverPlayer, this.craftSlots);
+	}
 }

@@ -14,9 +14,11 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -241,7 +243,9 @@ public final class NearbyCraftingHelper {
 
         ItemStack remaining = stack.copy();
 
-        for (Container container : containers) {
+        List<Container> orderedContainers = sortContainersForStack(containers, stack);
+
+        for (Container container : orderedContainers) {
             remaining = addToContainer(container, remaining);
             if (remaining.isEmpty()) {
                 break;
@@ -249,6 +253,41 @@ public final class NearbyCraftingHelper {
         }
 
         return remaining;
+    }
+
+    private static List<Container> sortContainersForStack(List<Container> containers, ItemStack stack) {
+        List<Container> ordered = new ArrayList<>(containers);
+        if (stack.isEmpty()) {
+            return ordered;
+        }
+
+        Map<Container, Integer> counts = new IdentityHashMap<>();
+        for (Container container : ordered) {
+            counts.put(container, countMatchingItems(container, stack));
+        }
+
+        ordered.sort((a, b) -> Integer.compare(
+                counts.getOrDefault(b, 0),
+                counts.getOrDefault(a, 0)
+        ));
+
+        return ordered;
+    }
+
+    private static int countMatchingItems(Container container, ItemStack stack) {
+        int total = 0;
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack existing = container.getItem(slot);
+            if (existing.isEmpty()) {
+                continue;
+            }
+
+            if (ItemStack.isSameItemSameComponents(existing, stack)) {
+                total += existing.getCount();
+            }
+        }
+
+        return total;
     }
 
     private static ItemStack addToContainer(Container container, ItemStack stack) {
